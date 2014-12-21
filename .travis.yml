@@ -25,6 +25,8 @@ env:
     - ELASTICSEARCH_VERSION="1.4.1" TEST_CONFIG="phpunit-integration-legacy-elasticsearch.xml"
 
 matrix:
+  # mark as finished before allow_failures are run
+  fast_finish: true
   allow_failures:
     - php: hhvm
       env: TEST_CONFIG="phpunit.xml" SYMFONY_VERSION="~2.6@beta"
