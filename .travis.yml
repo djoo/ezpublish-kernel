@@ -1,5 +1,8 @@
 language: php
 
+# hint that we don't need sudo to use container based test system
+sudo: false
+
 # run tests on php misc php versions
 php:
   - 5.4
