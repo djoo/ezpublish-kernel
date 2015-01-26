@@ -44,7 +44,7 @@ class FieldTypeRegistry
         {
             if ( !$value instanceof SPIFieldType )
             {
-                return $this->getFieldType( $identifier );
+                $this->getFieldType( $identifier );
             }
         }
         return $this->fieldTypes;
