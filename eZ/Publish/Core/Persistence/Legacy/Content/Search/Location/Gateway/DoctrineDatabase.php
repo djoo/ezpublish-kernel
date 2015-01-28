@@ -81,14 +81,16 @@ class DoctrineDatabase extends Gateway
      * @param int $offset
      * @param int|null $limit
      * @param null|\eZ\Publish\API\Repository\Values\Content\Query\SortClause[] $sortClauses
+     * @param bool $doCount
      *
      * @return mixed[][]
      */
-    public function find( Criterion $criterion, $offset = 0, $limit = null, array $sortClauses = null )
+    public function find( Criterion $criterion, $offset = 0, $limit = null, array $sortClauses = null, $doCount = true )
     {
         $fieldMap = $this->getFieldMap( $sortClauses );
-        $count = $this->getTotalCount( $criterion, $sortClauses, $fieldMap );
-        if ( $limit === 0 || $count <= $offset )
+        $count = $doCount ? $this->getTotalCount( $criterion, $sortClauses, $fieldMap ) : null;
+
+        if ( $limit === 0 || ( $doCount && $count <= $offset ) )
         {
             return array( "count" => $count, "rows" => array() );
         }

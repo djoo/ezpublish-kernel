@@ -97,8 +97,9 @@ class Handler implements SearchHandlerInterface
         // The legacy search does not know about scores, so that we just
         // combine the query with the filter
         $filter = new Criterion\LogicalAnd( array( $query->query, $query->filter ) );
+        $doCount = isset( $fieldFilters['perform_extra_count'] ) ? $fieldFilters['perform_extra_count'] : true;
 
-        $data = $this->gateway->find( $filter, $query->offset, $query->limit, $query->sortClauses, null );
+        $data = $this->gateway->find( $filter, $query->offset, $query->limit, $query->sortClauses, null, $doCount );
 
         $result = new SearchResult();
         $result->time = microtime( true ) - $start;
