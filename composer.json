@@ -1,6 +1,6 @@
 {
-    "name": "ezsystems/platform-installer",
-    "description": "eZ Platform installer",
+    "name": "ezsystems/platform-installer-bundle",
+    "description": "eZ Platform installer Bundle",
     "license": "GPL-2.0",
     "authors": [
         {
