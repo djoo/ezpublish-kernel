@@ -7,16 +7,16 @@
  */
 namespace EzSystems\PlatformInstallerBundle\Command;
 
-use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Exception\ConnectionException;
-use Doctrine\DBAL\DBALException;
 use Symfony\Bundle\FrameworkBundle\Command\ContainerAwareCommand;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Filesystem\Filesystem;
 
 /**
- * Exit codes:
- * - 3: database doesn't exist
+ * TODO
+ * - [ ] ImageMagick
+ * - [x] ezpublish_dev.yml ?
  */
 class InstallPlatformCommand extends ContainerAwareCommand
 {
@@ -28,6 +28,7 @@ class InstallPlatformCommand extends ContainerAwareCommand
 
     const EXIT_DATABASE_NOT_FOUND_ERROR = 3;
     const EXIT_GENERAL_DATABASE_ERROR = 4;
+    const EXIT_PARAMETERS_NOT_FOUND = 5;
 
     protected function configure()
     {
@@ -38,9 +39,48 @@ class InstallPlatformCommand extends ContainerAwareCommand
     {
         $this->output = $output;
 
+        $this->checkParameters();
         $this->checkDatabase();
         $this->importSchema();
         $this->importCleanData();
+        $this->createConfiguration();
+    }
+
+    private function createConfiguration()
+    {
+        $this->copyConfigurationFile(
+            __DIR__ . '/../Resources/config_templates/ezpublish.yml.clean',
+            'ezpublish/config/ezpublish.yml'
+        );
+
+        $this->copyConfigurationFile(
+            __DIR__ . '/../Resources/config_templates/ezpublish_dev.yml',
+            'ezpublish/config/ezpublish_dev.yml'
+        );
+
+        $this->copyConfigurationFile(
+            __DIR__ . '/../Resources/config_templates/ezpublish_prod.yml',
+            'ezpublish/config/ezpublish_prod.yml'
+        );
+    }
+
+    private function copyConfigurationFile($source, $target)
+    {
+        $fs = new Filesystem();
+        $fs->copy($source, $target);
+
+        if (!$this->output->isQuiet()) {
+            $this->output->writeln( "Copied $source to $target");
+        }
+    }
+
+    private function checkParameters()
+    {
+        $parametersFile = 'ezpublish/config/parameters.yml';
+        if (!is_file( $parametersFile )) {
+            $this->output->writeln("Required configuration file $parametersFile not found");
+            exit(self::EXIT_PARAMETERS_NOT_FOUND);
+        }
     }
 
     private function importSchema()
