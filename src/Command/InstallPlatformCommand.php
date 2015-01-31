@@ -14,10 +14,20 @@ use Symfony\Bundle\FrameworkBundle\Command\ContainerAwareCommand;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
+/**
+ * Exit codes:
+ * - 3: database doesn't exist
+ */
 class InstallPlatformCommand extends ContainerAwareCommand
 {
     /** @var \Doctrine\DBAL\Connection */
     private $db;
+
+    /** @var \Symfony\Component\Console\Output\OutputInterface */
+    private $output;
+
+    const EXIT_DATABASE_NOT_FOUND_ERROR = 3;
+    const EXIT_GENERAL_DATABASE_ERROR = 4;
 
     protected function configure()
     {
@@ -26,21 +36,50 @@ class InstallPlatformCommand extends ContainerAwareCommand
 
     protected function execute( InputInterface $input, OutputInterface $output )
     {
-        try {
-            if (!$this->configuredDatabaseExists()) {
-                $output->writeln(
-                    sprintf(
-                        "The configured database '%s' does not exist",
-                        $this->db->getDatabase()
-                    )
-                );
-                exit;
-            }
-        } catch (ConnectionException $e) {
-            $output->writeln("An error occured connecting to the database:");
-            $output->writeln($e->getMessage());
-            $output->writeln("Please check the database configuration in parameters.yml");
-            exit;
+        $this->output = $output;
+
+        $this->checkDatabase();
+        $this->importSchema();
+        $this->importCleanData();
+    }
+
+    private function importSchema()
+    {
+        // @todo Should come from a different place
+        // @todo Should be part of the LSE
+        $this->runQueriesFromFile(
+            'vendor/ezsystems/ezpublish-kernel/data/mysql/schema.sql'
+        );
+    }
+
+    private function importCleanData()
+    {
+        // @todo Should come from a different place
+        // @todo Should be part of the LSE
+        $this->runQueriesFromFile(
+            'vendor/ezsystems/ezpublish-kernel/data/cleandata.sql'
+        );
+    }
+
+    private function runQueriesFromFile( $file )
+    {
+        $queries = array_filter( preg_split( '(;\\s*$)m', file_get_contents( $file ) ) );
+
+        if (!$this->output->isQuiet())
+        {
+            $this->output->writeln(
+                sprintf(
+                    "Executing %d queries from %s on database %s",
+                    count($queries),
+                    $file,
+                    $this->db->getDatabase()
+                )
+            );
+        }
+
+        foreach ($queries as $query)
+        {
+            $this->db->exec($query);
         }
     }
 
@@ -58,5 +97,28 @@ class InstallPlatformCommand extends ContainerAwareCommand
             throw $e;
         }
         return true;
+    }
+
+    /**
+     * @param \Symfony\Component\Console\Output\OutputInterface $output
+     */
+    private function checkDatabase()
+    {
+        try {
+            if (!$this->configuredDatabaseExists()) {
+                $this->output->writeln(
+                    sprintf(
+                        "The configured database '%s' does not exist",
+                        $this->db->getDatabase()
+                    )
+                );
+                exit(self::EXIT_DATABASE_NOT_FOUND_ERROR);
+            }
+        } catch ( ConnectionException $e ) {
+            $this->output->writeln( "An error occured connecting to the database:" );
+            $this->output->writeln( $e->getMessage() );
+            $this->output->writeln( "Please check the database configuration in parameters.yml" );
+            exit(self::EXIT_GENERAL_DATABASE_ERROR);
+        }
     }
 }
