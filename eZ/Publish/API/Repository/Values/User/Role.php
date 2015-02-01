@@ -16,7 +16,7 @@ use eZ\Publish\API\Repository\Values\ValueObject;
  *
  * @property-read mixed $id the internal id of the role
  * @property-read string $identifier the identifier of the role
- * @property-read array $policies an array of the policies {@link \eZ\Publish\API\Repository\Values\User\Policy} of the role.
+ * @property-read \eZ\Publish\API\Repository\Values\User\Policy[] $policies an array of the policies of the role.
  */
 abstract class Role extends ValueObject
 {

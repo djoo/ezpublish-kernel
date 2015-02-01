@@ -18,7 +18,7 @@ use eZ\Publish\API\Repository\Values\ValueObject;
  * @property-read mixed $roleId the role id this policy belongs to
  * @property-read string $module Name of module, associated with the Policy
  * @property-read string $function  Name of the module function Or all functions with '*'
- * @property-read array $limitations an array of \eZ\Publish\API\Repository\Values\User\Limitation
+ * @property-read \eZ\Publish\API\Repository\Values\User\Limitation[] $limitations an array of \eZ\Publish\API\Repository\Values\User\Limitation
  */
 abstract class Policy extends ValueObject
 {
