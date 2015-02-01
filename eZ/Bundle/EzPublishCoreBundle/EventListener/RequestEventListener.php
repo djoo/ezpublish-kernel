@@ -58,7 +58,6 @@ class RequestEventListener implements EventSubscriberInterface
     {
         return array(
             KernelEvents::REQUEST => array(
-                array( 'onKernelRequestSetup', 190 ),
                 array( 'onKernelRequestForward', 10 ),
                 array( 'onKernelRequestRedirect', 0 ),
                 // onKernelRequestIndex needs to be before the router (prio 32)
