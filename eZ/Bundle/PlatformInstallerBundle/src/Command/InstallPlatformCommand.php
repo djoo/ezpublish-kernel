@@ -7,14 +7,11 @@
  */
 namespace EzSystems\PlatformInstallerBundle\Command;
 
-use Doctrine\DBAL\DBALException;
 use Doctrine\DBAL\Exception\ConnectionException;
-use EzSystems\PlatformInstallerBundle\src\Installer\Installer;
 use Symfony\Bundle\FrameworkBundle\Command\ContainerAwareCommand;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Component\Filesystem\Filesystem;
 
 /**
  * TODO
@@ -29,9 +26,6 @@ class InstallPlatformCommand extends ContainerAwareCommand
     /** @var \Symfony\Component\Console\Output\OutputInterface */
     private $output;
 
-    /** @var \EzSystems\PlatformInstallerBundle\Installer\Installer */
-    private $installer;
-
     const EXIT_DATABASE_NOT_FOUND_ERROR = 3;
     const EXIT_GENERAL_DATABASE_ERROR = 4;
     const EXIT_PARAMETERS_NOT_FOUND = 5;
@@ -40,7 +34,7 @@ class InstallPlatformCommand extends ContainerAwareCommand
     protected function configure()
     {
         $this->setName( 'ezplatform:install' );
-        $this->addOption( 'type', null, InputArgument::OPTIONAL, "The type of install to execute, one of: clean, demo-clean", 'clean' );
+        $this->addArgument( 'type', InputArgument::REQUIRED, "The type of install, one of: clean, demo-clean" );
     }
 
     protected function execute( InputInterface $input, OutputInterface $output )
@@ -48,7 +42,7 @@ class InstallPlatformCommand extends ContainerAwareCommand
         $this->checkParameters();
         $this->checkDatabase();
 
-        switch ( $type = $input->getOption( 'type' ) )
+        switch ( $type = $input->getArgument( 'type' ) )
         {
             case 'clean':
                 $installer = $this->getContainer()->get( 'ezplatform.installer.clean_installer' );
@@ -58,7 +52,7 @@ class InstallPlatformCommand extends ContainerAwareCommand
                 break;
             default:
                 $output->writeln( "Unknown install type '$type''" );
-                exit( 6 );
+                exit( self::EXIT_UNKNOWN_INSTALL_TYPE );
         }
         $installer->setOutput( $output );
         $installer->createConfiguration();
@@ -69,9 +63,10 @@ class InstallPlatformCommand extends ContainerAwareCommand
     private function checkParameters()
     {
         $parametersFile = 'ezpublish/config/parameters.yml';
-        if (!is_file( $parametersFile )) {
-            $this->output->writeln("Required configuration file $parametersFile not found");
-            exit(self::EXIT_PARAMETERS_NOT_FOUND);
+        if ( !is_file( $parametersFile ) )
+        {
+            $this->output->writeln( "Required configuration file $parametersFile not found" );
+            exit( self::EXIT_PARAMETERS_NOT_FOUND );
         }
     }
 
@@ -81,9 +76,12 @@ class InstallPlatformCommand extends ContainerAwareCommand
     private function configuredDatabaseExists()
     {
         $this->db = $this->getContainer()->get( 'database_connection' );
-        try {
+        try
+        {
             $this->db->connect();
-        } catch ( ConnectionException $e ) {
+        }
+        catch ( ConnectionException $e )
+        {
             // @todo 1049 is MySQL's code for "database doesn't exist", refactor
             if ( $e->getPrevious()->getCode() == 1049 )
             {
@@ -94,26 +92,27 @@ class InstallPlatformCommand extends ContainerAwareCommand
         return true;
     }
 
-    /**
-     * @param \Symfony\Component\Console\Output\OutputInterface $output
-     */
     private function checkDatabase()
     {
-        try {
-            if (!$this->configuredDatabaseExists()) {
+        try
+        {
+            if ( !$this->configuredDatabaseExists() )
+            {
                 $this->output->writeln(
                     sprintf(
                         "The configured database '%s' does not exist",
                         $this->db->getDatabase()
                     )
                 );
-                exit(self::EXIT_DATABASE_NOT_FOUND_ERROR);
+                exit( self::EXIT_DATABASE_NOT_FOUND_ERROR );
             }
-        } catch ( ConnectionException $e ) {
+        }
+        catch ( ConnectionException $e )
+        {
             $this->output->writeln( "An error occured connecting to the database:" );
             $this->output->writeln( $e->getMessage() );
             $this->output->writeln( "Please check the database configuration in parameters.yml" );
-            exit(self::EXIT_GENERAL_DATABASE_ERROR);
+            exit( self::EXIT_GENERAL_DATABASE_ERROR );
         }
     }
 }
