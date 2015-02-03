@@ -14,7 +14,7 @@ ezpublish:
         # Siteaccess groups. Use them to group common settings.
         groups:
             demo_site_group: [demo_site, eng, ger]
-        default_siteaccess: site
+        default_siteaccess: demo_site
         match:
             URIElement: 1
 
