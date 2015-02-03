@@ -60,7 +60,7 @@ class InstallPlatformCommand extends ContainerAwareCommand
                 $output->writeln( "Unknown install type '$type''" );
                 exit( 6 );
         }
-
+        $installer->setOutput( $output );
         $installer->createConfiguration();
         $installer->importSchema();
         $installer->importData();
