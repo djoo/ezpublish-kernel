@@ -39,6 +39,8 @@ class InstallPlatformCommand extends ContainerAwareCommand
 
     protected function execute( InputInterface $input, OutputInterface $output )
     {
+        $this->output = $output;
+
         $this->checkParameters();
         $this->checkDatabase();
 
